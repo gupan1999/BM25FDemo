@@ -113,7 +113,7 @@ class Doc:
         return len(self.content_term_list+self.title_term_list)
 
     def __str__(self):
-        return 'id:{}\t\t{}\t\tscore:{}\n{}'.format(self.doc_id, self.title_shown, self.score, self.content_shown)
+        return 'id:{}\t\t{}\t\tscore:{}\n{}\n'.format(self.doc_id, self.title_shown, self.score, self.content_shown)
 
     def field_len(self, field_name):
         if field_name == 'title':
@@ -124,9 +124,8 @@ class Doc:
 
 if __name__ == '__main__':
     print('开始建立索引')
-    # indexer = Indexer('result.txt', 'index')
-    # indexer = Indexer('result_.txt', 'index_')
     start = time.time()
+    # indexer = Indexer('test.txt', 'test')
     indexer = Indexer('final.txt', 'final')
     indexer.index()
     print(f'{time.time()-start:.6f}s 索引建立完成')

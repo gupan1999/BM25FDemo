@@ -24,9 +24,10 @@ class Searcher:
         k1 = self.bm25.k1
         w_title = self.bm25.w_title
         w_content = self.bm25.w_content
-
+        cnt = 0
         for qterm, qidf in query_terms_idf.items():
             if qterm not in doc.title_term_list and qterm not in doc.content_term_list:
+                cnt += 1
                 continue
             else:
                 self.mark(qterm, doc)
@@ -36,6 +37,8 @@ class Searcher:
                         + w_title * self.index.inverted[qterm][doc.doc_id].field_freq('title') / (
                         1 - b + b * doc.field_len('title') / self.index.avg_len_title)
             doc.score += qidf * R / (R + k1)
+        if cnt == len(query_terms_idf):
+            doc.score = 0
 
     def search(self, query):
         start = time.time()
@@ -47,10 +50,11 @@ class Searcher:
             return
         valid_terms_with_idf = {}
         # 预计算idf
+
         for qterm in query_terms:
             valid_terms_with_idf[qterm] = np.log(
                 1 + (self.index.doc_num - self.index.freq(qterm) + 0.5) / (self.index.freq(qterm) + 0.5))
-            print(f'{qterm}: {self.index.freq(qterm)}')
+            print(f'{qterm}: 出现在 {self.index.freq(qterm)} 个文档中')
 
         for doc in self.index.id_doc.values():
             # str转list方便在指定位置插入高亮符号
@@ -69,6 +73,7 @@ class Searcher:
 
     # 在指定位置插入高亮符号
     def mark(self, qterm, doc):
+        # print(f'id: {doc.doc_id}')
         if qterm in doc.title_term_list:
             for pos in self.index.inverted[qterm][doc.doc_id].title_positions:
                 start, end = pos[0], pos[1]
@@ -91,6 +96,8 @@ class Searcher:
     def show(self):
         for doc in self.ranked_doc_list:
             print(doc)
+            doc.title_shown = doc.title
+            doc.content_shown = doc.content
 
 
 class Bm25:
@@ -103,5 +110,5 @@ class Bm25:
 
 if __name__ == '__main__':
     searcher = Searcher(index_path='final')
-    searcher.search('content1 数据')
+    searcher.search('项目 搜索 推荐')
     searcher.show()
