@@ -6,12 +6,13 @@ import jieba
 
 class Tokenizer:
     def __init__(self):
+        # 分词后要滤除的停用词，额外加上空格
         self.stop_words_list = [line.strip() for line in open('stopwords.txt', encoding='UTF-8').readlines()] + [' ']
 
     def show_stop_words(self):
         print(self.stop_words_list)
 
-    # 带有位置信息的分词
+    # 带有位置信息的分词(搜索引擎模式)
     def cut_with_pos(self, text, lower=True):
         text_ = text
         if lower:
@@ -19,6 +20,7 @@ class Tokenizer:
         seq = jieba.tokenize(text_, mode='search')
         return [w for w in seq if w[0] not in self.stop_words_list]
 
+    # 精确模式分词
     def cut(self, text, lower=True):
         text_ = text
         if lower:

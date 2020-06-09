@@ -24,21 +24,17 @@ class Searcher:
         k1 = self.bm25.k1
         w_title = self.bm25.w_title
         w_content = self.bm25.w_content
-        cnt = 0
         for qterm, qidf in query_terms_idf.items():
             if qterm not in doc.title_term_list and qterm not in doc.content_term_list:
-                cnt += 1
                 continue
             else:
                 self.mark(qterm, doc)
-                # 代入公式
+                # 代入BM25F打分公式
                 R = w_content * self.index.inverted[qterm][doc.doc_id].field_freq('content') / (
                         1 - b + b * doc.field_len('content') / self.index.avg_len_content) \
                         + w_title * self.index.inverted[qterm][doc.doc_id].field_freq('title') / (
                         1 - b + b * doc.field_len('title') / self.index.avg_len_title)
             doc.score += qidf * R / (R + k1)
-        if cnt == len(query_terms_idf):
-            doc.score = 0
 
     def search(self, query):
         start = time.time()
@@ -48,9 +44,9 @@ class Searcher:
         if not query_terms:
             print('无有效关键词')
             return
+
         valid_terms_with_idf = {}
         # 预计算idf
-
         for qterm in query_terms:
             valid_terms_with_idf[qterm] = np.log(
                 1 + (self.index.doc_num - self.index.freq(qterm) + 0.5) / (self.index.freq(qterm) + 0.5))
@@ -96,10 +92,10 @@ class Searcher:
     def show(self):
         for doc in self.ranked_doc_list:
             print(doc)
-            doc.title_shown = doc.title
-            doc.content_shown = doc.content
+            doc.reset()
 
 
+# BM25F用到的超参数
 class Bm25:
     def __init__(self, b=0.75, k1=1.2, w_title=5, w_content=1):
         self.b = b

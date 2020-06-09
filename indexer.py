@@ -18,6 +18,7 @@ class Indexer:
         self.index_path = index_path
         self.init_doc(file_path)
 
+    # 读取文本初始化
     def init_doc(self, file_path):
         with open(file_path, 'r', encoding='utf-8') as f:
             for line in f.readlines():
@@ -35,13 +36,17 @@ class Indexer:
             for term_info in title_term_info:
                 term, start, end = term_info[0], term_info[1], term_info[2]
                 doc.title_term_list.append(term)
+                # 已出现过的词
                 if term in self.inverted:
+                    # 未记录过的文档id
                     if doc.doc_id not in self.inverted[term]:
                         inverted = Inverted()
                         inverted.add_title_pos(start, end)
                         self.inverted[term][doc.doc_id] = inverted
                     else:
+                        # 在已有对象添加位置信息
                         self.inverted[term][doc.doc_id].add_title_pos(start, end)
+                # 新词
                 else:
                     inverted = Inverted()
                     inverted.add_title_pos(start, end)
@@ -71,6 +76,7 @@ class Indexer:
         print('词汇数:%d' % len(self.inverted))
         pickle.dump(self, open(self.index_path, 'wb'))
 
+    # 词出现的文档数
     def freq(self, term):
         return len(self.inverted[term])
 
@@ -78,11 +84,13 @@ class Indexer:
 # 倒排索引项
 class Inverted:
     def __init__(self):
+        # 存各域中查询词出现的位置
         self.title_positions = []
         self.content_positions = []
 
-    def __len__(self):
-        return len(self.title_positions + self.content_positions)
+    # # 词在整个文档中出现的次数
+    # def __len__(self):
+    #     return len(self.title_positions + self.content_positions)
 
     def add_title_pos(self, start, end):
         self.title_positions.append([start, end])
@@ -90,6 +98,7 @@ class Inverted:
     def add_content_pos(self, start, end):
         self.content_positions.append([start, end])
 
+    # 词在文档的标题或内容中出现的次数
     def field_freq(self, field_name):
         if field_name == 'title':
             return len(self.title_positions)
@@ -109,17 +118,26 @@ class Doc:
         self.title_term_list = []
         self.score = 0
 
+    # 文档长度(按词表长度计算)
     def __len__(self):
         return len(self.content_term_list+self.title_term_list)
 
+    # 打印格式
     def __str__(self):
-        return 'id:{}\t\t{}\t\tscore:{}\n{}\n'.format(self.doc_id, self.title_shown, self.score, self.content_shown)
+        return 'id:{}\t\t{}\t\tscore:{}\n{}'.format(self.doc_id, self.title_shown, self.score, self.content_shown)
 
+    # 域(即标题或内容的长度)
     def field_len(self, field_name):
         if field_name == 'title':
             return len(self.title_term_list)
         else:
             return len(self.content_term_list)
+
+    # 清除搜索时的打分和高亮文本
+    def reset(self):
+        self.content_shown = self.content
+        self.title_shown = self.title
+        self.score = 0
 
 
 if __name__ == '__main__':
